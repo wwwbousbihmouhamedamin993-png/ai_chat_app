@@ -5,16 +5,31 @@
 // Setup type definitions for built-in Supabase Runtime APIs
 import "@supabase/functions-js/edge-runtime.d.ts"
 
-console.log("Hello from Functions!")
+
 
 Deno.serve(async (req) => {
-  const { name } = await req.json()
-  const data = {
-    message: `Hello ${name} from edge function `,
+  const { message } = await req.json()
+  const apiKey = Deno.env.get("GEMINI_API_KEY");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+  const geminiResponse = await fetch(url , {
+    method : "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({contents : [
+      {
+        parts : [
+          {
+            text : message
+          }
+        ]
+      }
+    ]})
   }
-
+  
+  )
+  const geminiData = await geminiResponse.json()
+  const geminiText = geminiData.candidates[0].content.parts[0].text
   return new Response(
-    JSON.stringify(data),
+    JSON.stringify(geminiText),
     { headers: { "Content-Type": "application/json" } },
   )
 })
